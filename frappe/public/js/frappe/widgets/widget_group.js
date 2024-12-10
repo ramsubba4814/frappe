@@ -205,17 +205,18 @@ export class SingleWidgetGroup {
 		let widget_object = frappe.widget.make_widget({
 			...widget,
 			widget_type: this.type,
-			container: this.container,
+			container: this.body,
+			card_filters: this.card_filters || "",
 			height: this.height || null,
 			options: {
 				...this.options,
-				on_delete: () => this.on_delete(),
-				on_edit: () => this.on_edit(widget_object),
+				on_delete: (name) => this.on_delete(name),
 			},
 		});
+	
 		this.widgets_list.push(widget_object);
 		this.widgets_dict[widget.name] = widget_object;
-
+	
 		return widget_object;
 	}
 

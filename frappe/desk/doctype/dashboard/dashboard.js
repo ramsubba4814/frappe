@@ -4,7 +4,12 @@
 frappe.ui.form.on("Dashboard", {
 	refresh: function (frm) {
 		frm.add_custom_button(__("Show Dashboard"), () =>
-			frappe.set_route("dashboard-view", frm.doc.name)
+			window.open(
+			`/app/dashboard-view/${frm.doc.name}` +
+				(frm.doc.custom_reference_doctype
+					? `?doctype=${encodeURIComponent(frm.doc.custom_reference_doctype)}`
+					: "")
+			)
 		);
 
 		if (!frappe.boot.developer_mode && frm.doc.is_standard) {

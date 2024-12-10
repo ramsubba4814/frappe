@@ -125,38 +125,53 @@ def has_permission(doc, ptype, user):
 
 
 @frappe.whitelist()
-def get_result(doc, filters, to_date=None):
-	doc = frappe.parse_json(doc)
-	fields = []
-	sql_function_map = {
-		"Count": "count",
-		"Sum": "sum",
-		"Average": "avg",
-		"Minimum": "min",
-		"Maximum": "max",
-	}
+def get_result(doc, filters, to_date=None, card_filters=None):
+    doc = frappe.parse_json(doc)
+    fields = []
+    sql_function_map = {
+        "Count": "count",
+        "Sum": "sum",
+        "Average": "avg",
+        "Minimum": "min",
+        "Maximum": "max",
+    }
 
-	function = sql_function_map[doc.function]
+    function = sql_function_map[doc.function]
 
-	if function == "count":
-		fields = [f"{function}(*) as result"]
-	else:
-		fields = [f"{function}({doc.aggregate_function_based_on}) as result"]
+    if function == "count":
+        fields = [f"{function}(*) as result"]
+    else:
+        fields = [f"{function}({doc.aggregate_function_based_on}) as result"]
 
-	if not filters:
-		filters = []
-	elif isinstance(filters, str):
-		filters = frappe.parse_json(filters)
+    if not filters:
+        filters = []
+    elif isinstance(filters, str):
+        filters = frappe.parse_json(filters)
 
-	if to_date:
-		filters.append([doc.document_type, "creation", "<", to_date])
+    if card_filters and isinstance(card_filters, str):
+        card_filters = frappe.parse_json(card_filters)
 
-	res = frappe.get_list(
-		doc.document_type, fields=fields, filters=filters, parent_doctype=doc.parent_document_type
-	)
-	number = res[0]["result"] if res else 0
+        unique_card_filters = {}
+        for card_filter in card_filters:
+            if len(card_filter) > 3 and card_filter[0] == doc.document_type:
+                key = tuple(card_filter[:3])  # Use field and condition as unique key
+                unique_card_filters[key] = card_filter
 
-	return flt(number)
+        # Add unique card_filters to filters
+        filters.extend(unique_card_filters.values())
+
+    if to_date:
+        filters.append([doc.document_type, "creation", "<", to_date])
+
+    res = frappe.get_list(
+        doc.document_type,
+        fields=fields,
+        filters=filters,
+        parent_doctype=doc.parent_document_type,
+    )
+    number = res[0]["result"] if res else 0
+
+    return flt(number)
 
 
 @frappe.whitelist()

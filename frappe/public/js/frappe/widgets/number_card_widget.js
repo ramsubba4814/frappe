@@ -126,6 +126,7 @@ export default class NumberCardWidget extends Widget {
 				method: this.card_doc.method,
 				args: {
 					filters: this.filters,
+					card_filters: this.card_filters || "",
 				},
 				get_number: (res) => this.get_number_for_custom_card(res),
 			},
@@ -143,6 +144,7 @@ export default class NumberCardWidget extends Widget {
 				args: {
 					doc: this.card_doc,
 					filters: this.filters,
+					card_filters: this.card_filters || "",
 				},
 				get_number: (res) => this.get_number_for_doctype_card(res),
 			},

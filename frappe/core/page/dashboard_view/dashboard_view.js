@@ -21,10 +21,38 @@ class Dashboard {
 	constructor(wrapper) {
 		this.wrapper = $(wrapper);
 		$(`<div class="dashboard" style="overflow: visible; margin: var(--margin-sm);">
+			<div class="dashboard-filters"></div>
 			<div class="dashboard-graph"></div>
 		</div>`).appendTo(this.wrapper.find(".page-content").empty());
 		this.container = this.wrapper.find(".dashboard-graph");
 		this.page = wrapper.page;
+		this.filter_wrapper = this.wrapper.find(".dashboard-filters");
+	}
+
+	add_filter_group() {
+		const doctype = frappe.utils.get_query_params().doctype;
+		if (!doctype) {
+			return;
+		}
+
+		frappe.model.with_doctype(doctype, () => {
+			const meta = frappe.get_meta(doctype);
+			if (!meta) {
+				return;
+			}
+
+			if (!$(".dashboard-filters").find(".filter-area").length) {
+				this.filter_group = new frappe.ui.FilterGroup({
+					parent: this.filter_wrapper,
+					doctype: doctype,
+					on_change: () => {
+						if (this.filter_group.get_filters()) {
+							frappe.dashboard.render_cards();
+						}
+					},
+				});
+			}
+		});
 	}
 
 	show() {
@@ -124,6 +152,9 @@ class Dashboard {
 	}
 
 	render_cards() {
+		if ($(".widget-group")) {
+			$(".widget-group").remove();
+		}
 		return this.get_permitted_items(
 			"frappe.desk.doctype.dashboard.dashboard.get_permitted_cards"
 		).then((cards) => {
@@ -136,10 +167,15 @@ class Dashboard {
 					name: card.card,
 				};
 			});
+			const card_filters =
+				this.filter_group && typeof this.filter_group.get_filters === "function"
+					? this.filter_group.get_filters()
+					: [];
 
 			this.number_card_group = new frappe.widget.WidgetGroup({
 				container: this.container,
 				type: "number_card",
+				card_filters: card_filters,
 				columns: 3,
 				options: {
 					allow_sorting: false,
